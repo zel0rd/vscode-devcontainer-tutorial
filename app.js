@@ -2,16 +2,16 @@
  * Simple TODO REST server.
  */
 const express = require("express");
-const pgp = require("pg-promise")();
+const mysql2 = require("mysql2");
 const app = express();
 const PORT = process.env.PORT || 3000;
-const connection = {
+const dbConfig = {
     host: "db",
-    database: process.env.POSTGRES_DB,
-    user: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE
 };
-const db = pgp(connection);
+const pool = mysql.createPool(dbConfig);
 
 // Middlewares.
 app.use(express.urlencoded({ extended: false }));
@@ -35,14 +35,25 @@ app.post("/todo", async (req, res) => {
 
 // READ
 app.get("/todo", async (req, res, next) => {
-    db.any("SELECT * FROM todo")
-        .then(data => res.send(data))
-        .catch(e => {
-            res.status(500);
-            res.send({
-                error: `Database error: ${e}`
-            });
-        });
+    const query = "SELECT * FROM todo"
+    
+    pool.getConnection((err, connection) => {
+        if(err) {
+            console.error("Error connecting to database: ", err);
+            return res.status(500).json({ error: 'Database error'})
+        }
+
+        connection.query(query, (err, rows) => {
+            connection.release();
+
+            if(err) {
+                console.error("Error querying database: ", err);
+                return res.status(500).json({ error: 'Database error'})
+            }
+
+            res.json(rows);
+        })
+    })
 });
 
 // UPDATE

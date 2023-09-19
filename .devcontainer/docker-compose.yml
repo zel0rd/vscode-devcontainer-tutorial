@@ -2,9 +2,12 @@ version: '3.7'
 
 x-environment:
     &default-environment
-    POSTGRES_USER: vscode
-    POSTGRES_PASSWORD: notsecure
-    POSTGRES_DB: tutorial
+    MYSQL_USER: vscode
+    MYSQL_PASSWORD: vscode
+    MYSQL_DATABASE: tutorial
+    MYSQL_ROOT_PASSWORD: notsecure
+    MYSLQ_CONTAINER_NAME: mysql
+
 services:
     app:
         build:
@@ -20,13 +23,13 @@ services:
         user: vscode
         command: sleep infinity
     db:
-        image: "postgres:12"
+        image: "mysql:8.0"
         restart: unless-stopped
         environment: *default-environment
         ports:
-            - 5432:5432
+            - 3306:3306
         volumes:
             - pgdata:/var/lib/postgresql/data
-            - ../postgresql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+            - ../mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
 volumes:
     pgdata:
